@@ -20,14 +20,14 @@ public class DataSeeder implements CommandLineRunner {
             return;
         }
         specialtyRepository.saveAll(List.of(
-                new Specialty(null, "Cardiologie", "Diagnosticul și tratamentul afecțiunilor inimii și vaselor de sânge."),
-                new Specialty(null, "Dermatologie", "Afecțiuni ale pielii, părului și unghiilor."),
-                new Specialty(null, "Neurologie", "Afecțiuni ale sistemului nervos central și periferic."),
-                new Specialty(null, "Pediatrie", "Îngrijirea medicală a copiilor și adolescenților."),
-                new Specialty(null, "Ortopedie", "Afecțiuni ale oaselor, articulațiilor și mușchilor."),
-                new Specialty(null, "Oftalmologie", "Diagnosticul și tratamentul bolilor ochilor."),
-                new Specialty(null, "Medicină internă", "Diagnosticul și tratamentul bolilor organelor interne la adulți."),
-                new Specialty(null, "ORL", "Afecțiuni ale urechii, nasului și gâtului.")
+                new Specialty(null, "Cardiology", "Diagnosis and treatment of heart and blood vessel disorders."),
+                new Specialty(null, "Dermatology", "Conditions of the skin, hair and nails."),
+                new Specialty(null, "Neurology", "Disorders of the central and peripheral nervous system."),
+                new Specialty(null, "Pediatrics", "Medical care for infants, children and adolescents."),
+                new Specialty(null, "Orthopedics", "Conditions of the bones, joints and muscles."),
+                new Specialty(null, "Ophthalmology", "Diagnosis and treatment of eye diseases."),
+                new Specialty(null, "Internal Medicine", "Diagnosis and treatment of internal organ diseases in adults."),
+                new Specialty(null, "Otolaryngology (ENT)", "Conditions of the ear, nose and throat.")
         ));
     }
 }

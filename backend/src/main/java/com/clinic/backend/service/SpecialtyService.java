@@ -46,8 +46,8 @@ public class SpecialtyService {
         Specialty specialty = getOrThrow(id);
         String name = request.name().trim();
 
-        // Verificăm unicitatea doar dacă numele s-a schimbat (ignorând majusculele);
-        // altfel existsByNameIgnoreCase ar găsi chiar înregistrarea curentă.
+        // Check uniqueness only if the name actually changed (case-insensitive);
+        // otherwise existsByNameIgnoreCase would match the current record itself.
         if (!specialty.getName().equalsIgnoreCase(name)
                 && specialtyRepository.existsByNameIgnoreCase(name)) {
             throw duplicate(name);
@@ -60,10 +60,10 @@ public class SpecialtyService {
 
     private Specialty getOrThrow(Long id) {
         return specialtyRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Specialitatea cu id " + id + " nu a fost găsită"));
+                .orElseThrow(() -> new ResourceNotFoundException("Specialty with id " + id + " not found"));
     }
 
     private DuplicateResourceException duplicate(String name) {
-        return new DuplicateResourceException("Specialitatea \"" + name + "\" există deja");
+        return new DuplicateResourceException("Specialty \"" + name + "\" already exists");
     }
 }
