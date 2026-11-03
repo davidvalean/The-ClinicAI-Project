@@ -1,16 +1,16 @@
-# secrete
+# secrets
 .env
 *.env
 application-local.properties
 
-# IDE (când deschizi tot proiectul în IntelliJ)
+# IDE (when opening the whole project in IntelliJ)
 .idea/
 *.iml
 
-# frontend (generat mai târziu de Claude Code)
+# frontend (to be generated later by Claude Code)
 frontend/node_modules/
 frontend/dist/
 
-# sistem
+# OS
 .DS_Store
 Thumbs.db
