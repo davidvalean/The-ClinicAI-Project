@@ -20,6 +20,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/specialties", "/api/specialties/**").permitAll()
+                        // Must stay above the public /api/doctors/** rule: the first matching rule wins.
+                        .requestMatchers(HttpMethod.GET, "/api/doctors/*/slots").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/doctors", "/api/doctors/**").permitAll()
                         .anyRequest().authenticated()
                 )

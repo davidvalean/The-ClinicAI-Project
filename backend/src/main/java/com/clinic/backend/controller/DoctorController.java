@@ -4,9 +4,12 @@ import com.clinic.backend.dto.DoctorCreateRequest;
 import com.clinic.backend.dto.DoctorDto;
 import com.clinic.backend.dto.DoctorProfileDto;
 import com.clinic.backend.dto.DoctorUpdateRequest;
+import com.clinic.backend.dto.TimeSlotDto;
+import com.clinic.backend.service.AppointmentService;
 import com.clinic.backend.service.DoctorService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -27,6 +31,7 @@ import java.util.List;
 public class DoctorController {
 
     private final DoctorService doctorService;
+    private final AppointmentService appointmentService;
 
     @GetMapping
     public List<DoctorDto> findAll(@RequestParam(required = false) Long specialtyId) {
@@ -36,6 +41,13 @@ public class DoctorController {
     @GetMapping("/{id}")
     public DoctorProfileDto findById(@PathVariable Long id) {
         return doctorService.findById(id);
+    }
+
+    @GetMapping("/{id}/slots")
+    @PreAuthorize("isAuthenticated()")
+    public List<TimeSlotDto> findFreeSlots(@PathVariable Long id,
+                                           @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return appointmentService.findFreeSlots(id, date);
     }
 
     @PostMapping
