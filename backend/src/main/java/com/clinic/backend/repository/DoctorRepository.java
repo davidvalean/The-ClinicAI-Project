@@ -27,6 +27,9 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
     @EntityGraph(attributePaths = {"user", "specialty", "schedules"})
     Optional<Doctor> findWithDetailsById(Long id);
 
+    // The doctor profile that belongs to a login account (used to find the logged-in doctor).
+    Optional<Doctor> findByUserId(Long userId);
+
     // SELECT ... FOR UPDATE: other transactions that want the same lock wait until this one ends.
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT d FROM Doctor d WHERE d.id = :id")

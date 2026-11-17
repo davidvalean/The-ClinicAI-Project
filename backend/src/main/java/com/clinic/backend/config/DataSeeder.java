@@ -1,19 +1,25 @@
 package com.clinic.backend.config;
 
+import com.clinic.backend.entity.Appointment;
+import com.clinic.backend.entity.AppointmentStatus;
 import com.clinic.backend.entity.Doctor;
 import com.clinic.backend.entity.Role;
 import com.clinic.backend.entity.Specialty;
 import com.clinic.backend.entity.User;
+import com.clinic.backend.repository.AppointmentRepository;
 import com.clinic.backend.repository.DoctorRepository;
 import com.clinic.backend.repository.SpecialtyRepository;
 import com.clinic.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
@@ -22,6 +28,9 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.clinic.backend.entity.AppointmentStatus.CANCELLED;
+import static com.clinic.backend.entity.AppointmentStatus.COMPLETED;
+import static com.clinic.backend.entity.AppointmentStatus.SCHEDULED;
 import static java.time.DayOfWeek.FRIDAY;
 import static java.time.DayOfWeek.MONDAY;
 import static java.time.DayOfWeek.THURSDAY;
@@ -43,7 +52,9 @@ public class DataSeeder implements CommandLineRunner {
     private final SpecialtyRepository specialtyRepository;
     private final DoctorRepository doctorRepository;
     private final UserRepository userRepository;
+    private final AppointmentRepository appointmentRepository;
     private final PasswordEncoder passwordEncoder;
+    private final Clock clock;
 
     @Override
     @Transactional
@@ -52,6 +63,7 @@ public class DataSeeder implements CommandLineRunner {
         seedUser("Admin", "Clinic", "admin@clinic.ro", "Admin123!", Role.ADMIN);
         seedUser("Pacient", "Test", "pacient@clinic.ro", "Pacient123!", Role.PATIENT);
         seedDoctors();
+        seedAppointments();
     }
 
     private void seedSpecialties() {
@@ -97,6 +109,64 @@ public class DataSeeder implements CommandLineRunner {
                 doctor("Laura", "Nistor", specialties.get("Internal Medicine"), "Preventive medicine.", TUE_THU, 12, 18),
                 doctor("Paul", "Rusu", specialties.get("Otolaryngology (ENT)"), "Sinus and hearing disorders.", MON_WED_FRI, 10, 16)
         ));
+    }
+
+    // Past and future appointments of the test patient, with different statuses, spread over
+    // several months so the admin statistics have something to show. Dates are relative to today
+    // and moved off weekends.
+    // It uses the doctors that already exist in the database (first ones by id) instead of fixed
+    // emails, because an older database may contain doctors created by an earlier version of this seeder.
+    // Every entry has a different time of day, so even if the same doctor is reused for several
+    // entries, two of them can never fall in the same slot.
+    private void seedAppointments() {
+        if (appointmentRepository.count() > 0) {
+            return;
+        }
+        List<Doctor> doctors = doctorRepository.findAll(Sort.by("id"));
+        User patient = userRepository.findByEmail("pacient@clinic.ro").orElse(null);
+        if (doctors.isEmpty() || patient == null) {
+            return;
+        }
+
+        // The first doctor (lowest id) gets the most entries; it is the one to log in with for the demo.
+        appointmentRepository.saveAll(List.of(
+                appointment(patient, doctors, 0, -14, "09:00", COMPLETED, "Annual check-up"),
+                appointment(patient, doctors, 0, -3, "09:30", SCHEDULED, "Chest pain follow-up"),
+                appointment(patient, doctors, 0, 2, "10:00", SCHEDULED, "ECG results"),
+                appointment(patient, doctors, 0, 5, "10:30", CANCELLED, "Blood pressure check"),
+                appointment(patient, doctors, 1, -30, "11:00", COMPLETED, "Skin rash"),
+                appointment(patient, doctors, 1, 3, "11:30", SCHEDULED, "Mole check"),
+                appointment(patient, doctors, 2, -60, "12:00", COMPLETED, "Vaccination"),
+                appointment(patient, doctors, 2, -10, "12:30", CANCELLED, "Fever"),
+                appointment(patient, doctors, 3, 7, "13:00", SCHEDULED, "Eye exam"),
+                appointment(patient, doctors, 4, -45, "13:30", COMPLETED, "Diabetes control"),
+                appointment(patient, doctors, 4, -2, "14:00", SCHEDULED, "Blood test review")
+        ));
+    }
+
+    private Appointment appointment(User patient, List<Doctor> doctors, int doctorIndex, int daysFromToday,
+                                    String time, AppointmentStatus status, String reason) {
+        LocalDateTime start = weekday(LocalDate.now(clock).plusDays(daysFromToday), daysFromToday < 0 ? -1 : 1)
+                .atTime(LocalTime.parse(time));
+
+        Appointment appointment = new Appointment();
+        appointment.setPatient(patient);
+        // With fewer doctors than indexes, the list is reused from the beginning.
+        appointment.setDoctor(doctors.get(doctorIndex % doctors.size()));
+        appointment.setStartTime(start);
+        appointment.setEndTime(start.plus(Appointment.DURATION));
+        appointment.setStatus(status);
+        appointment.setReason(reason);
+        appointment.setCreatedAt(LocalDateTime.now(clock));
+        return appointment;
+    }
+
+    // Moves a weekend date to the nearest weekday in the given direction (-1 = back, +1 = forward).
+    private static LocalDate weekday(LocalDate date, int step) {
+        while (date.getDayOfWeek() == DayOfWeek.SATURDAY || date.getDayOfWeek() == DayOfWeek.SUNDAY) {
+            date = date.plusDays(step);
+        }
+        return date;
     }
 
     private Doctor doctor(String firstName, String lastName, Specialty specialty, String bio,
